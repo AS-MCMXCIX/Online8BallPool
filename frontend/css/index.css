@@ -1,0 +1,126 @@
+:root{
+    --violet-color: #6f42c1;
+    --list-scroll-bck-color: #343a40;
+    --list-scroll-crn-color: black;
+    --list-scroll-thumb-color: #4285F4;
+    --list-scroll-thumb-active-color: red;
+}
+@font-face {
+    font-family: 'orbitron';
+    src: url("../fonts/Orbitron/static/Orbitron-Medium.ttf");
+}
+@font-face {
+    font-family: 'iona';
+    src: url("../fonts/IONA/IONA-Regular4.otf");
+}
+
+#singing-section {
+    margin-right: 10% !important;
+    width: 13% !important;
+}
+
+#sidebar {
+    width: fit-content;
+    transition: 0.67s ease !important;
+}
+
+#check-button:checked ~ #sidebar {
+    /*background-color: white !important;*/
+    transform: translateX(100%) !important;
+}
+
+#sidebar > ul > li a:hover {
+    color: black!important;
+    background-color: #00fcd6 !important;
+}
+
+#sidebar > ul > li {
+    color: black!important;
+    background-color: #4b268b !important;
+    border-radius: 3px;
+}
+#queue-timer{
+    width: 100%;
+    font-family: iona, serif;
+    font-size: 4rem;
+    color: #00fcd6;
+    border: 4px solid #00fcd6;
+    background-color: #10322f;
+    user-select: none;
+}
+#queue-timer-shadow{
+    font-family: iona, serif;
+    font-size: 4rem;
+    background-color: transparent;
+    opacity: 0.3;
+    position: absolute;
+    left: 0;
+    right: 0;
+}
+.no-select {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.nav-pills .nav-link {
+    color: white;
+    border: 0;
+    border-radius: 0.25rem;
+}
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+    color: white !important;
+    background-color: #171616 !important;
+}
+
+.dark-white-text-bg {
+    color: white !important;
+    background-color: var(--violet-color)!important;
+}
+
+.s-hover:hover {
+    box-shadow: 0 0 4px 4px #3f4f4f;
+    transition: box-shadow 0.4s ease-in-out;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    width: 100%;
+    opacity: 0;
+    transition: .5s ease;
+    background-color: red;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    transform: rotateX(180deg);
+    width: 12px;
+    height: 12px;
+    cursor: grab;
+    background-color: var(--list-scroll-bck-color);
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+    background-color: var(--list-scroll-crn-color);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+    background-color: var(--list-scroll-thumb-color);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:horizontal:active {
+    background-color: var(--list-scroll-thumb-active-color);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:vertical:active {
+    background-color: var(--list-scroll-thumb-active-color);
+}

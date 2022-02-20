@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en" style="overflow-x: hidden;">
+<head>
+    <meta charset="UTF-8">
+    <title>matchmaking_queue</title>
+    <script src="lib/jquery-3.5.1.min.js"></script>
+    <script src="lib/bootstrap.bundle.js"></script>
+    <script src="lib/socket.io/client-dist/socket.io.min.js"></script>
+    <link href="lib/bootstrap.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/countdown.css">
+    <script type="text/javascript" src="lib/parse/dist/parse.js"></script>
+
+</head>
+<body style="font-family: 'Segoe UI',sans-serif">
+<!-- Modal -->
+<div class="modal fade bg-danger" id="confirmation-modal" tabindex="-1" role="dialog"
+     aria-labelledby="ModalCenterTitle" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content bg-dark">
+            <div class="modal-header justify-content-center" style="background-color: var(--violet-color)">
+                <h5 class="modal-title text-light" id="modal-title">Accept Match</h5>
+            </div>
+            <div id="countdown" class="my-2">
+                <div id="countdown-number"></div>
+                <svg>
+                    <circle r="36" cx="40" cy="40"></circle>
+                </svg>
+            </div>
+            <div class="modal-footer align-items-center justify-content-center bg-warning text-light">
+                <button class="btn btn-danger" data-bs-dismiss="modal" id="reject-match-btn" type="button">No
+                </button>
+                <button class="btn btn-info text-light" id="accept-match-btn" type="button">Yes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="navbar2" class="sticky-top w-100 bg-dark text-white text-center py-3" style="height: 6rem;">
+    <label class="float-end d-flex btn btn-light px-3 py-0 rounded-0 align-items-center me-3" for="check-button"
+           style="font-size: 3rem; height: 4rem;width: fit-content">&#9776;</label>
+    <input class="btn-check" type="checkbox" id="check-button">
+    <div class="position-absolute end-0 d-flex flex-column p-3 dark-white-text-bg"
+         style="height: calc(100vh - 6rem); top: 6rem;width: 15%"
+         id="sidebar">
+        <ul class="nav nav-pills flex-column mb-auto align-items-start">
+            <li class="w-100 d-flex flex-row justify-content-between" style="height: 10vh">
+                <a href="#part1-1" class="nav-link d-flex flex-column text-start my-auto h-100 justify-content-center">
+                    Signed In As
+                    <br>
+                    <strong id="username">
+                        Username
+                    </strong>
+                </a>
+                <div class="col-5">
+                    <img alt="UserImage" id="user-avatar" class="mh-100 w-100" style="object-fit: contain">
+                </div>
+            </li>
+            <li class="dropdown-divider border-info border-3 w-100"></li>
+            <li class="w-100">
+                <a href="#part2-1" class="nav-link text-start fs-4">
+                    Profile
+                </a>
+            </li>
+            <li class="dropdown-divider border-info border-3 w-100"></li>
+            <li class="w-100">
+                <div id="queue-timer" class="mx-auto text-center mb-2">
+                    <div id="queue-timer-shadow" class="text-center mx-auto">
+                        88:88
+                    </div>
+                    <div id="timer-text" class="mx-auto">08:08</div>
+                </div>
+                <div class="btn btn-info w-100 text-white fs-3"
+                     onclick="toggleQueue();" id="queue-button">Queue
+                </div>
+            </li>
+            <li class="dropdown-divider border-info border-3 w-100"></li>
+            <li class="w-100">
+                <a href="/main" onclick="logout()" class="nav-link text-start fs-4">
+                    Sign out
+                </a>
+            </li>
+        </ul>
+
+        <hr>
+    </div>
+</div>
+<div class="top-100">
+    <pre>
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+        a
+    </pre>
+</div>
+<script>
+    initParse();
+    let user;
+    let socket;
+    const Profile = Parse.Object.extend("Profile");
+    let profile = new Profile();
+    Parse.User.current().fetch().then(function (fetchedUser) {
+        document.getElementById('username').innerText = fetchedUser.get('username');
+        user = fetchedUser;
+        profile = fetchProfile(user);
+        socket = io.connect('http://localhost:1337');
+        socket.on('notify', (data) => {
+            console.log(data);
+        });
+
+        socket.on('nqd', (ack) => {
+            toggleTimer();
+            if (ack) {
+                ack("acknowledged");
+            }
+        });
+        socket.on('dqd', (ack) => {
+            toggleTimer();
+            if (ack) {
+                ack("acknowledged");
+            }
+        });
+        socket.on('matchPrompt', async (ack) => {
+            countdown = 10;
+            showMatchPromptModal();
+            let ans = await handleMatchPromptInput();
+            if (ans === "NO") {
+                toggleTimer();
+            } else if (ans === "OK") {
+                // if (counter_interval) {
+                //     clearInterval(counter_interval);
+                // }
+                setFreezeMatchPromptModal(true);
+            }
+            if (ack) {
+                ack(ans);
+            }
+        });
+        socket.on('stayInQueue', () => {
+            hideMatchPromptModal();
+            setFreezeMatchPromptModal(false);
+        });
+        socket.on('goToGame', (data, ack) => {
+            ack("OK");
+            localStorage.setItem(data.matchId, JSON.stringify(data));
+            window.location.href = `/game?matchId=${encodeURIComponent(data.matchId)}`;
+        });
+    }, function (error) {
+        window.location.href = "/main";
+    });
+
+    async function handleMatchPromptInput() {
+        return new Promise(function (resolve, reject) {
+            let timeout = setTimeout(() => {
+                hideMatchPromptModal();
+                clearInterval(counter_interval);
+                counter_interval = null;
+                resolve("NO");
+            }, 10000);
+            $("#reject-match-btn").on('click', function (e) {
+                clearInterval(counter_interval);
+                counter_interval = null;
+                clearTimeout(timeout);
+                resolve("NO");
+            });
+            $("#accept-match-btn").on('click', function (e) {
+                clearInterval(counter_interval);
+                counter_interval = null;
+                clearTimeout(timeout);
+                resolve("OK");
+            });
+        });
+    }
+
+    // async function fetchThat(){
+    //     const data =  await fetch('http://localhost:1338/calc', {
+    //         method: 'POST', // *GET, POST, PUT, DELETE, etc.
+    //         mode: 'cors', // no-cors, *cors, same-origin
+    //         cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+    //         credentials: 'same-origin', // include, *same-origin, omit
+    //         headers: {
+    //             'Content-Type': 'application/json'
+    //             // 'Content-Type': 'application/x-www-form-urlencoded',
+    //         },
+    //         redirect: 'follow', // manual, *follow, error
+    //         referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+    //         body: JSON.stringify({that: 3, action: [1, 3, 4]}) // body data type must match "Content-Type" header
+    //     });
+    //     return data.json();
+    // }
+    // let ans = fetchThat().then(data => {
+    //     console.log(data); // JSON data parsed by `data.json()` call
+    // });
+    // let request = new Request(,{
+    //     body : JSON.stringify(),
+    //     method: 'POST',
+    //     mode: 'cors'
+    // });
+    // fetch(request);
+    let startTime = 0;
+    let timerOn = false;
+    let matchAcceptShown = false;
+    let timerUpdateInterval = null;
+    let countdown = 10;
+
+    let timerText = document.getElementById('timer-text');
+    let timer = document.getElementById('queue-timer');
+    let queueButton = document.getElementById('queue-button');
+    let timerShadow = document.getElementById('queue-timer-shadow');
+    $(timer).toggle();
+    let countdownNumberEl = document.getElementById('countdown-number');
+
+    countdownNumberEl.textContent = countdown;
+    let counter_interval;
+
+    function logout() {
+        Parse.User.logOut();
+    }
+
+    function initParse() {
+        Parse.initialize("2205d9f2c9b254ba027afb3bab7d5255", "3b2da21d87b41f0085a6485ed8f214b3");
+        Parse.serverURL = 'http://localhost:1338/EightBallPool'
+    }
+
+    function fetchProfile(user) {
+        let query = new Parse.Query(Profile);
+        query.equalTo("user", user);
+        query.include("avatar");
+        query.first().then(function (result) {
+            if (result) {
+                // If result was defined, the object with this objectID was found
+                document.getElementById('user-avatar').src = result.get('avatar').get('image')._url;
+            }
+        }, function (error) {
+            console.error("Error searching for user Avatar," + " Error: " + error);
+        });
+    }
+
+    function convertToString(t) {
+        let m = Math.floor(t / 1000);
+        let s = m % 60;
+        m /= 60;
+        m = Math.floor(m);
+        return `${(m).toLocaleString('en-US', {
+            minimumIntegerDigits: 2,
+            useGrouping: false
+        })}:${(s).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})}`;
+    }
+
+
+    function toggleTimer() {
+        if (timerOn) {
+            if (timerUpdateInterval !== null)
+                clearInterval(timerUpdateInterval);
+            timerShadow.style.visibility = 'hidden';
+            $(timer).slideToggle(200, 'linear', () => {
+            });
+        } else {
+            $(timer).slideToggle(200, 'linear', () => {
+                timerShadow.style.visibility = 'visible';
+            });
+            startTime = Date.now();
+            timerText.innerText = convertToString(Date.now() - startTime);
+            timerUpdateInterval = setInterval(() => {
+                let now = Date.now();
+                timerText.innerText = convertToString(now - startTime);
+            }, 1000);
+        }
+        timerOn = !timerOn;
+        queueButton.innerText = timerOn ? 'Dequeue' : 'Queue'
+    }
+
+    function setFreezeMatchPromptModal(val) {
+        $('#accept-match-btn').attr("disabled", val);
+        $('#reject-match-btn').attr("disabled", val);
+    }
+
+    function hideMatchPromptModal() {
+        $('#confirmation-modal').modal('hide');
+        matchAcceptShown = false;
+        countdown = 10;
+    }
+
+    function showMatchPromptModal() {
+        countdownNumberEl.textContent = "10";
+        $('#confirmation-modal').modal('show');
+        counter_interval = setInterval(function () {
+            if (--countdown >= 0) {
+                countdownNumberEl.textContent = countdown;
+            } else {
+                clearInterval(counter_interval);
+                counter_interval = null;
+            }
+        }, 1000);
+        matchAcceptShown = true;
+    }
+
+    function toggleQueue() {
+        if (!user)
+            return;
+        if (timerOn) {
+            socket.emit("dq", user.get('sessionToken'));
+        } else {
+            socket.emit("nq", user.get('sessionToken'));
+        }
+    }
+</script>
+</body>
+</html>

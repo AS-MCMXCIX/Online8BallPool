@@ -1,0 +1,26 @@
+{
+  "dependencies": {
+    "async-lock": "^1.3.1",
+    "body-parser": "^1.19.2",
+    "complex.js": "^2.0.15",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.3",
+    "parse-dashboard": "^4.0.0",
+    "parse-server": "^4.10.4",
+    "socket.io": "^4.4.1",
+    "timeout-callback": "^2.0.2"
+  },
+  "scripts": {
+    "run-db": "sudo docker start redis_container && sudo docker start mongo_container",
+    "clear": "rm -rf dist && mkdir dist",
+    "build": "npm run clear && babel src -d dist && cp -p -r ./src/email/templates ./dist/email/templates",
+    "server": "node dist/app.js",
+    "start": "npm run clear && babel src -d dist && node ./dist/app.js"
+  },
+  "type": "module",
+  "name": "EightBallPool",
+  "version": "1.0.0",
+  "main": "app.js",
+  "license": "MIT"
+}

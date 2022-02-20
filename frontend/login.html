@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <script src="lib/jquery-3.5.1.min.js"></script>
+    <script src='https://kit.fontawesome.com/a076d05399.js' crossorigin='anonymous'></script>
+    <link href="lib/bootstrap.css" rel="stylesheet">
+    <script src="lib/bootstrap.bundle.js"></script>
+    <script src="lib/socket.io/client-dist/socket.io.min.js"></script>
+    <link rel="stylesheet" href="css/index.css"/>
+    <script type="text/javascript" src="lib/parse/dist/parse.js"></script>
+</head>
+<body class="bg-dark">
+
+<div class="btn btn-info position-absolute top-0 start-0 fs-2 text-light" onclick="window.location.href='/main'" style="width: 10%;">
+    Home
+</div>
+<div class="position-absolute w-25 mx-auto bg-dark" style="top: 20%; right: 37.5%">
+    <div class="d-flex justify-content-center text-light mb-4">
+        <h2>Sign in to Your Account</h2>
+    </div>
+    <form class="p-4" style="background-color: #6f42c1" onsubmit="return submitForm(this);">
+        <div class="mb-3">
+            <label for="email-or-username" class="form-label fs-4 text-light">Username or Email</label>
+            <input type="text" placeholder="Username or Email" class="form-control bg-dark text-light" id="email-or-username" name="email" aria-describedby="emailHelp" required>
+        </div>
+        <div class="mb-3">
+            <label for="pass-input" class="form-label fs-4 text-light">Password</label>
+            <div class="input-group mb-3" id="show_hide_password">
+                <input placeholder="Password should be at least 6 characters" type="password" name="password"
+                       class="form-control bg-dark text-light" id="pass-input" required>
+                <div class="input-group-text bg-dark">
+                    <a href=""><i class="fa fa-eye-slash text-light" aria-hidden="true"></i></a>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-info text-light w-100 fs-4 mt-2">Submit</button>
+    </form>
+</div>
+</body>
+<script>
+    $(document).ready(function () {
+        $("#show_hide_password a").on('click', function (event) {
+            event.preventDefault();
+            if ($('#show_hide_password input').attr("type") === "text") {
+                $('#show_hide_password input').attr('type', 'password');
+                $('#show_hide_password i').addClass("fa-eye-slash");
+                $('#show_hide_password i').removeClass("fa-eye");
+            } else if ($('#show_hide_password input').attr("type") === "password") {
+                $('#show_hide_password input').attr('type', 'text');
+                $('#show_hide_password i').removeClass("fa-eye-slash");
+                $('#show_hide_password i').addClass("fa-eye");
+            }
+        });
+    });
+    initParse();
+
+    function initParse() {
+        Parse.initialize("2205d9f2c9b254ba027afb3bab7d5255", "3b2da21d87b41f0085a6485ed8f214b3");
+        Parse.serverURL = 'http://localhost:1338/EightBallPool'
+    }
+    function submitForm(form) {
+        let data = new FormData(form);
+        logIn(data);
+        return false;
+    }
+    async function logIn(data) {
+        // Create a new instance of the user class
+        let user = await Parse.User
+            .logIn(data.get('email'), data.get('password')).then(function(user) {
+                console.log('User created successful with name: ' + user.get("username") + ' and email: ' + user.get("email"));
+            }).catch(function(error){
+                console.log("Error: " + error.code + " " + error.message);
+            });
+        window.location.href="http://localhost:1338/queue";
+    }
+</script>
+</html>

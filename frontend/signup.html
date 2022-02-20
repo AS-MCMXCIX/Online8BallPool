@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up</title>
+    <script src="lib/jquery-3.5.1.min.js"></script>
+    <script src='https://kit.fontawesome.com/a076d05399.js' crossorigin='anonymous'></script>
+
+    <link href="lib/bootstrap.css" rel="stylesheet">
+
+    <script src="lib/bootstrap.bundle.js"></script>
+    <link rel="stylesheet" href="css/index.css"/>
+    <script type="text/javascript" src="lib/parse/dist/parse.js"></script>
+
+</head>
+<body class="bg-dark">
+<div class="btn btn-info position-absolute top-0 start-0 fs-2 text-light" onclick="window.location.href='/main'" style="width: 10%;">
+    Home
+</div>
+<div class="position-absolute w-25 mx-auto bg-dark" style="top: 10%; right: 37.5%">
+    <div class="d-flex justify-content-center text-light mb-4">
+        <h2>Enter Your Information</h2>
+    </div>
+    <form class="p-4" style="background-color: #6f42c1" onsubmit="signUp(this); return false;">
+        <div class="mb-3">
+            <label for="email" class="form-label fs-4 text-light">Email</label>
+            <input placeholder="Email ..." type="email" class="form-control bg-dark text-light" id="email" name="email"
+                   aria-describedby="emailHelp" required>
+        </div>
+        <div class="mb-3">
+            <label for="username" class="form-label fs-4 text-light">Username</label>
+            <input placeholder="Username ..." type="text" class="form-control bg-dark text-light" id="username" name="username"
+                   aria-describedby="textHelp" required>
+        </div>
+        <div class="mb-3">
+            <label for="pass-input" class="form-label fs-4 text-light">Password</label>
+            <div class="input-group mb-3" id="show_hide_password">
+                <input class="form-control bg-dark text-light" id="pass-input" minlength="4"
+                       name="password" placeholder="Password must be at least 4 characters" required type="password">
+                <div class="input-group-text bg-dark">
+                    <a href=""><i class="fa fa-eye-slash text-light" aria-hidden="true"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="form-label fs-4 text-light text-center">Select Your Avatar:</div>
+        <div class="d-flex justify-content-center mb-3 mx-auto" style="height: 20vh">
+            <img draggable="false" class="mw-100" id="selected-avatar" alt="...">
+            <input placeholder="" type="hidden"  name="avatar" id="avatar-name"
+                   aria-describedby="textHelp" required value="Unknown">
+        </div>
+
+        <div class="row row-cols-3 m-0 mt-2 w-100 overflow-auto bg-success custom-scrollbar" style="height: 30vh"
+             id="avatars">
+        </div>
+        <button type="submit" class="btn btn-info text-light w-100 fs-4 mt-2">Submit</button>
+    </form>
+</div>
+</body>
+<!--suppress JSJQueryEfficiency -->
+<script>
+    $(document).ready(function () {
+        $("#show_hide_password a").on('click', function (event) {
+            event.preventDefault();
+            if ($('#show_hide_password input').attr("type") === "text") {
+                $('#show_hide_password input').attr('type', 'password');
+                $('#show_hide_password i').addClass("fa-eye-slash");
+                $('#show_hide_password i').removeClass("fa-eye");
+            } else if ($('#show_hide_password input').attr("type") === "password") {
+                $('#show_hide_password input').attr('type', 'text');
+                $('#show_hide_password i').removeClass("fa-eye-slash");
+                $('#show_hide_password i').addClass("fa-eye");
+            }
+        });
+    });
+    initParse();
+    if(Parse.User.current() !== null)
+        window.location.href = 'matchmaking_queue.html';
+    let avatars;
+    function loadAvatars() {
+        let Avatar = Parse.Object.extend("Avatar");
+        let query = new Parse.Query(Avatar);
+        query.find().then(function (result) {
+            if (result) {
+                // If result was defined, the object with this objectID was found
+                avatars = result;
+                let container = document.getElementById('avatars');
+
+                for (let i = 0; i < avatars.length; i++) {
+                    let path, name;
+                    name = avatars[i].get('name');
+                    path = avatars[i].get('image')._url;
+                    if(name ==="Unknown"){
+                        document.getElementById("selected-avatar").src = path;
+                    }
+                    let div = createCard(path);
+                    div.onclick = () => {
+                        let el = document.getElementById('selected-avatar');
+                        el.src = path;
+                        document.getElementById('avatar-name').value = avatars[i].get('name');
+                    };
+                    container.appendChild(div);
+                }
+            } else {
+                console.log("Avatars not found.");
+            }
+        }, function (error) {
+            console.error("Error: " + error);
+        });
+    }
+
+    loadAvatars();
+
+
+
+    function initParse() {
+        Parse.initialize("2205d9f2c9b254ba027afb3bab7d5255", "3b2da21d87b41f0085a6485ed8f214b3");
+        Parse.serverURL = 'http://localhost:1338/EightBallPool'
+    }
+    function createCard(path) {
+        let div = document.createElement('div');
+        div.classList.add('col');
+        div.classList.add('mb-4');
+        div.classList.add('mt-3');
+
+        let card = document.createElement('div');
+        card.className = 'card';
+        card.classList.add('s-hover');
+
+        let img = document.createElement('img');
+        img.src = path;
+        img.className = 'mh-100';
+        img.style.height = '15vh';
+        img.style.objectFit = "cover";
+        img.draggable = false;
+        card.appendChild(img);
+        div.appendChild(card);
+        return div;
+    }
+    function signUp(form) {
+        let data = new FormData(form);
+        // Create a new instance of the user class
+        var user = new Parse.User();
+        user.set("username", data.get('username'));
+        user.set("password", data.get('password'));
+        user.set("email", data.get('email'));
+        user.set("avatar", data.get('avatar'));
+
+        // other fields can be set just like with Parse.Object
+
+        user.signUp().then(function(user) {
+            console.log('User created successful with name: ' + user.get("username") + ' and email: ' + user.get("email"));
+        }).catch(function(error){
+            // form.reset();
+            console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+</script>
+</html>
